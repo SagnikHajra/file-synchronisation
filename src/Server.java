@@ -33,7 +33,6 @@ public class Server implements Runnable{
         this.client = client;
     }
 
-
     public void run(){
         System.out.println("\n>> new request from "+ this.client.getInetAddress() + " " + "Port: " + this.client.getPort() + " has been accepted");
         // initiate the Scanner and PrintWriter objects
