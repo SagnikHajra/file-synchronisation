@@ -60,40 +60,37 @@
 //
 //}
 
+import java.io.IOException;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.concurrent.TimeUnit;
 
 public class WatchFolder {
-    String pathName = null;
+    public Path newFile=null;
+    public Path modifiedFile=null;
+    public Path deletedFile=null;
+    public final WatchKey watchKey;
+    public final WatchService watchService;
+    public final Path directory;
 
-    public WatchFolder(String dir){
-        this.pathName = dir;
-
+    public WatchFolder(String dir) throws IOException {
+        // STEP1: Get the path of the directory which you want to monitor.
+        this.directory = Path.of(dir);
+        // STEP2: Create a watch service
+        this.watchService = FileSystems.getDefault().newWatchService();
+        // STEP3: Register the directory with the watch service
+        this.watchKey = directory.register(this.watchService, StandardWatchEventKinds.ENTRY_CREATE,
+                StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
     }
     public void watchFolder() {
 
         try {
-
-            System.out.println("Watching directory for changes");
-
-            // STEP1: Create a watch service
-            WatchService watchService = FileSystems.getDefault().newWatchService();
-
-            // STEP2: Get the path of the directory which you want to monitor.
-            Path directory = Path.of(this.pathName);
-
-            // STEP3: Register the directory with the watch service
-            WatchKey watchKey = directory.register(watchService, StandardWatchEventKinds.ENTRY_CREATE,
-                    StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
-
-            // STEP4: Poll for events
-            while (true) {
-                for (WatchEvent<?> event : watchKey.pollEvents()) {
-
+//            while (true) {
+                for (WatchEvent<?> event : this.watchKey.pollEvents()) {
                     // STEP5: Get file name from even context
                     WatchEvent<Path> pathEvent = (WatchEvent<Path>) event;
 
@@ -104,37 +101,38 @@ public class WatchFolder {
 
                     // STEP7: Perform necessary action with the event
                     if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
-
                         System.out.println("A new file is created : " + fileName);
+                        this.newFile = fileName;
                     }
 
                     if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
-
                         System.out.println("A file has been deleted: " + fileName);
+                        this.deletedFile = fileName;
                     }
                     if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
-
                         System.out.println("A file has been modified: " + fileName);
+                        this.modifiedFile = fileName;
                     }
-
+                    TimeUnit.MILLISECONDS.sleep(50);
                 }
+//                TimeUnit.MILLISECONDS.sleep(50);
 
                 // STEP8: Reset the watch key everytime for continuing to use it for further event polling
-                boolean valid = watchKey.reset();
-                if (!valid) {
-                    break;
-                }
+//                boolean valid = watchKey.reset();
+//                if (!valid) {
+//                    break;
+//                }
 
-            }
+//            }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
 
     }
-    public static void main(String[] args){
-        WatchFolder obj = new WatchFolder("C:\\Users\\Sagnik Hajra\\Desktop\\PPT\\New folder");
-        obj.watchFolder();
-    }
+//    public static void main(String[] args){
+//        WatchFolder obj = new WatchFolder("C:\\Users\\Sagnik Hajra\\Desktop\\PPT\\New folder");
+//        obj.watchFolder();
+//    }
 
 }
