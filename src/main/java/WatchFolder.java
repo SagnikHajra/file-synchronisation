@@ -69,6 +69,9 @@ import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.util.concurrent.TimeUnit;
 
+import org.apache.log4j.Logger;
+import utilities.Log;
+
 public class WatchFolder {
     public Path newFile=null;
     public Path modifiedFile=null;
@@ -76,6 +79,8 @@ public class WatchFolder {
     public final WatchKey watchKey;
     public final WatchService watchService;
     public final Path directory;
+    private static final Logger logger = Log.getLogger("Client");
+
 
     public WatchFolder(String dir) throws IOException {
         // STEP1: Get the path of the directory which you want to monitor.
@@ -89,7 +94,7 @@ public class WatchFolder {
     public void watchFolder() {
 
         try {
-//            while (true) {
+//            while (true) {fileName
                 for (WatchEvent<?> event : this.watchKey.pollEvents()) {
                     // STEP5: Get file name from even context
                     WatchEvent<Path> pathEvent = (WatchEvent<Path>) event;
@@ -101,19 +106,16 @@ public class WatchFolder {
 
                     // STEP7: Perform necessary action with the event
                     if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
-                        System.out.println("A new file is created : " + fileName);
                         this.newFile = fileName;
                     }
 
                     if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
-                        System.out.println("A file has been deleted: " + fileName);
                         this.deletedFile = fileName;
                     }
                     if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
-                        System.out.println("A file has been modified: " + fileName);
                         this.modifiedFile = fileName;
                     }
-                    TimeUnit.MILLISECONDS.sleep(50);
+                    TimeUnit.MILLISECONDS.sleep(5000);
                 }
 //                TimeUnit.MILLISECONDS.sleep(50);
 
@@ -126,7 +128,7 @@ public class WatchFolder {
 //            }
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Unknown error", e);
         }
 
     }

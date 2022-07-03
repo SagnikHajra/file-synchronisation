@@ -35,21 +35,35 @@ public class Client implements Runnable{
         }else if(this.threadName.equals("watcher")){
             try {
                 this.watchOverFiles();
-            }catch (IOException io){
-                logger.error("Exception", io);
+            }catch (Exception e){
+                logger.error("Exception", e);
             }
         }
     }
 
-    public void watchOverFiles() throws IOException{
+    public void watchOverFiles() throws IOException, InterruptedException {
+
         WatchFolder watcher = new WatchFolder(localDir);
         logger.info("Watching directory for changes");
         // STEP4: Poll for events
         while (true) {
             watcher.watchFolder();
             if(watcher.newFile != null){
-                this.talkToServer("newFile", watcher.newFile);
+                logger.info("A new file is created : " + watcher.newFile);
+                // Send the file over UDP
+                watcher.newFile = null;
             }
+            if(watcher.modifiedFile != null){
+                logger.info("A new file is created : " + watcher.modifiedFile);
+                // Send the modified blocks over UDP
+                watcher.modifiedFile = null;
+            }
+            if(watcher.deletedFile != null){
+                logger.info("A new file is created : " + watcher.deletedFile);
+                // Send the modified blocks over UDP
+                watcher.deletedFile = null;
+            }
+            TimeUnit.MILLISECONDS.sleep(100);
             boolean valid = watcher.watchKey.reset();
             if (!valid) {
                 break;
@@ -57,7 +71,8 @@ public class Client implements Runnable{
         }
     }
     public void polling(){
-
+        logger.info("Polling the server started");
+        logger.info("Polling the server Finished");
     }
 
     public void talkToServer(String command, Path filName){
@@ -77,19 +92,17 @@ public class Client implements Runnable{
     public static void main(String[] args) throws IOException {
         // Expectation is Client.class file will be executed with an identifier like 0, 1, 2 etc
         // And localDir will be decided using that client_no
-        int clientNum = Integer.parseInt(args[0]);
+        int clientNum = 1;// Integer.parseInt(args[0]);
         localDir = Constants.LOCAL_DIRS[0][clientNum];
         backupDir = Constants.LOCAL_DIRS[1][clientNum];
         // First cleanup the clients' local and backup dirs.
         Helper.deleteAllFiles(localDir, backupDir);
-
-        try{
-            InetAddress serverIp=InetAddress.getByName("localhost");
-            tcpSocket = new Socket(serverIp, Constants.SERVER_TCP_PORT);
-        }catch (Exception e){
-            logger.error("Failed to create client", e);
-        }
-
+//        try{
+//            InetAddress serverIp=InetAddress.getByName("localhost");
+//            tcpSocket = new Socket(serverIp, Constants.SERVER_TCP_PORT);
+//        }catch (Exception e){
+//            logger.error("Failed to create client", e);
+//        }
         Thread watcher = new Thread(new Client("watcher"));
         Thread pollingAgent = new Thread(new Client("pollingAgent"));
 
