@@ -1,32 +1,24 @@
+import org.apache.log4j.Logger;
+import utilities.Log;
+
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.sql.SQLOutput;
-import java.util.Scanner;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Scanner;
-
-
 
 public class Server implements Runnable{
     Socket client;
+    Map<String, Integer> clientPortMap = new HashMap();
+    public static final Logger logger = Log.getLogger("Server");
+    public static String requestType;
+    public static List<Buffer> clinetBuffer = new ArrayList<>();
+    public static int clientNo;
+    public static String localDir;
+    public static String backupDir;
+
+
 
     public Server(Socket client){
         this.client = client;
@@ -34,41 +26,63 @@ public class Server implements Runnable{
 
     @Override
     public void run(){
-        System.out.println("\n>> new request from "+ this.client.getInetAddress() + " " + "Port: " + this.client.getPort() + " has been accepted");
+        logger.info("new request from "+ this.client.getInetAddress() + "/" + this.client.getPort() + " has been accepted");
         // initiate the Scanner and PrintWriter objects
         Scanner receiver = null;
+        PrintWriter sender = null;
         try {
             receiver = new Scanner(this.client.getInputStream());
         } catch (IOException e) {
             e.printStackTrace();
         }
         try {
-            PrintWriter sender = new PrintWriter(this.client.getOutputStream(), true);
+            sender = new PrintWriter(this.client.getOutputStream(), true);
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        // Get actionTypes from the received data
+        // First thing to do is get the client Number
         String line = receiver.nextLine();
-        String actiontype = "";
+        clientNo = Integer.parseInt(line);
+        clientPortMap.put(line, this.client.getPort());
+        logger.info("Welcome Client"+line);
+        line = receiver.nextLine();
+        requestType = line;
+        line = receiver.nextLine();
         while(!line.equals("STOP")){
-            System.out.print(this.client.getPort() + ">> " + line + Constants.CRLF);
             line = receiver.nextLine();
         }
-        System.out.println("\n>> All requests from "+ this.client.getInetAddress() +" have been completed");
+
+        if(requestType.equals("POLLING")){
+            // Look into client(id) buffer
+            assert sender != null;
+            sender.println(clinetBuffer.get(clientNo).checkUpdate());
+        }else if(requestType.equals("STARTING")){
+            clinetBuffer.set(clientNo, new Buffer(clientNo));
+        }
+
+        logger.info("All requests from "+ this.client.getInetAddress() + "/" + this.client.getPort()+" have been completed");
     }
 
     public static void main(String[] args){
         ServerSocket socket=null;
         Socket client=null;
+        clinetBuffer.add(new Buffer(0));
+        clinetBuffer.add(new Buffer(1));
+        clinetBuffer.add(new Buffer(2));
+        clinetBuffer.add(new Buffer(3));
+        // localDir
+        localDir = Constants.LOCAL_DIRS[0][0];
+        backupDir = Constants.LOCAL_DIRS[1][0];
+        // First cleanup the clients' local and backup dirs.
+        Helper.deleteAllFiles(logger, localDir, backupDir);
 
         try{
             socket = new ServerSocket(Constants.SERVER_TCP_PORT);
         }catch(IOException exc){
-            System.out.println("\n>> Unable to setup port and start the server...");
+            logger.error("Unable to setup port and start the server...");
             System.exit(1);
         }
-        System.out.println("\n>> Server is listening to port " + Constants.SERVER_TCP_PORT);
+        logger.info("Server is listening to port " + Constants.SERVER_TCP_PORT);
         // Create thread pool
         Thread[] clientThreads = new Thread [10];
         int idx, i;
@@ -95,7 +109,7 @@ public class Server implements Runnable{
             try {
                 client = socket.accept();
             } catch (IOException exc){
-                System.out.println("\n>> Fail to listen to requests!");
+                logger.error("Failed to listen to requests!");
                 System.exit(1);
             }
             clientThreads[idx] = new Thread(new Server(client));
