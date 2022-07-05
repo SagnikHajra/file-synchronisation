@@ -18,6 +18,8 @@ public class Constants {
                                                 }
                                             };
 
+    public static final int blockSize = 2_000_000;
+    public static final int UDP_PACK_SIZE = 2000060;
     public static final String CRLF = "\r\n";
 
 }
