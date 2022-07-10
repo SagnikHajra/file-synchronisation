@@ -1,13 +1,10 @@
 import org.apache.log4j.Logger;
 import utilities.Log;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Scanner;
 
 
@@ -17,7 +14,7 @@ public class Client1 implements Runnable{
     public boolean sender = false;
     public static String localDir;
     public static String backupDir;
-    private static final Logger logger = Log.getLogger("Client1");//    private static final Logger logger = LogManager.getLogger(Client.class);
+    private static final Logger logger = Log.getLogger("Client");//    private static final Logger logger = LogManager.getLogger(Client.class);
     public static Socket tcpSocket;
     public static int receiverUDPPort;
     public static int senderUDPPOrt;
@@ -77,8 +74,6 @@ public class Client1 implements Runnable{
     public void watchOverFiles() throws Exception {
         logger.info("Watching directory for changes"+localDir);
         this.getNewWatcher();
-        FileTransferUtility transfer;
-        int startBlock;
         // STEP4: Poll for events
         while (true) {
             if(this.canRead()) {
@@ -92,51 +87,21 @@ public class Client1 implements Runnable{
                     Scanner receiver = new Scanner(tcpSocket.getInputStream());
                     String action = clientNum + Constants.CRLF + "GET NEW FILE";
                     sender.println(action);
-                    transfer = new FileTransferUtility(false, 0, senderUDPPOrt, receiverUDPPort, tcpSocket, localDir, watcher.newFile.toString(), logger, clientNum, sender, receiver);
+//                sender.close();
+                    FileTransferUtility transfer = new FileTransferUtility(0, senderUDPPOrt, receiverUDPPort, tcpSocket, localDir, watcher.newFile.toString(), logger, clientNum, sender, receiver);
                     transfer.sendfile();
-                    Helper.moveToBackupFolder(localDir,backupDir,watcher.newFile.toString(), logger);
                     watcher.newFile = null;
                     tcpSocket.close();
                     sender.close();
                     receiver.close();
                 } else if (watcher.modifiedFile != null) {
                     logger.info("A file is modified : " + watcher.modifiedFile);
-                    // Send the update over UDP
-                    Path origin = Paths.get(localDir, String.valueOf(watcher.modifiedFile));
-                    Path backup = Paths.get(backupDir, String.valueOf(watcher.modifiedFile));
-                    Thread.sleep(100);
-                    startBlock = FileComparison.compareFileByByte(origin, backup, logger);
-                    logger.info("Change detected at Block no "+startBlock);
-                    if(startBlock>-1) {
-
-                        Socket tcpSocket = createTcpConn();
-                        PrintWriter sender = new PrintWriter(tcpSocket.getOutputStream(), true);
-                        Scanner receiver = new Scanner(tcpSocket.getInputStream());
-                        String action = clientNum + Constants.CRLF + "GET UPDATE FILE";
-                        sender.println(action);
-
-                        transfer = new FileTransferUtility(true, startBlock, senderUDPPOrt, receiverUDPPort, tcpSocket, localDir, watcher.modifiedFile.toString(), logger, clientNum, sender, receiver);
-                        transfer.sendfile();
-
-                        tcpSocket.close();
-                        sender.close();
-                        receiver.close();
-                        Helper.moveToBackupFolder(localDir,backupDir,watcher.modifiedFile.toString(), logger);
-                    }else {
-                        logger.info("No difference observed between against backup file");
-                    }
                     watcher.modifiedFile = null;
                 } else if (watcher.deletedFile != null) {
                     logger.info("A new file is deleted : " + watcher.deletedFile);
-                    // Send the msg to server
-                    Socket tcpSocket = createTcpConn();
-                    PrintWriter sender = new PrintWriter(tcpSocket.getOutputStream(), true);
-                    Helper.DeleteSingleFile(backupDir, watcher.deletedFile.toString(), logger);
-                    String action = clientNum + Constants.CRLF + "DELETE FILE" + "\n" + watcher.deletedFile.toString();
-                    sender.println(action);
+                    // Send the modified blocks over UDP
+                    Helper.DeleteSingleFile(localDir, watcher.deletedFile.toString());
                     watcher.deletedFile = null;
-                    tcpSocket.close();
-                    sender.close();
                 }
                 Thread.sleep(100);
                 boolean valid = watcher.watchKey.reset();
@@ -172,16 +137,10 @@ public class Client1 implements Runnable{
                 while(!this.canWrite()){Thread.sleep(1);}
 
                 if (line.startsWith("ADD")) {
-                    String command = clientNum+Constants.CRLF+"SEND NEW FILE";
-                    this.getFile(command, line.split("#")[1], "0");
-                    Helper.moveToBackupFolder(localDir,backupDir,line.split("#")[1], logger);
-                }else if (line.startsWith("UPDATE")) {
-                    String command = clientNum+Constants.CRLF+"SEND UPDATE FILE";
-                    this.getFile(command, line.split("#")[1], line.split("#")[2]);
-                    Helper.moveToBackupFolder(localDir,backupDir,line.split("#")[1], logger);
-                }else if (line.startsWith("DELETE")) {
-                    Helper.DeleteSingleFile(localDir, line.split("#")[1], logger);
-                    Helper.DeleteSingleFile(backupDir, line.split("#")[1], logger);
+//                    FileTransferUtility transfer = new FileTransferUtility(0, senderUDPPOrt, receiverUDPPort, tcpSocket, localDir, line.split("#")[1], logger, clientNum, sender, receiver);
+//                    transfer.receiveHandle();
+                    this.getFile(line.split("#")[1]);
+
                 }
 
                 this.getNewWatcher();
@@ -196,7 +155,8 @@ public class Client1 implements Runnable{
         }
     }
 
-    public void getFile(String command, String fileName, String startBlock) throws IOException {
+    public void getFile(String fileName) throws IOException {
+        String command = clientNum+Constants.CRLF+"SEND NEW FILE";
         tcpSocket = createTcpConn();
         logger.info("Client Socket created");
         PrintWriter sender = new PrintWriter(tcpSocket.getOutputStream(), true);
@@ -205,7 +165,7 @@ public class Client1 implements Runnable{
         try {
             // send the file name
             sender.println(command);
-            FileTransferUtility transfer = new FileTransferUtility(command.contains("UPDATE"),Integer.parseInt(startBlock), senderUDPPOrt, receiverUDPPort, tcpSocket, localDir, fileName, logger, clientNum, sender, receiver);
+            FileTransferUtility transfer = new FileTransferUtility(0, senderUDPPOrt, receiverUDPPort, tcpSocket, localDir, fileName, logger, clientNum, sender, receiver);
             transfer.receiveHandleClient();
 
             tcpSocket.close();
@@ -216,6 +176,7 @@ public class Client1 implements Runnable{
             logger.error("Failed to chat", e);
         }
     }
+
 
 
     private static void setProperties(){

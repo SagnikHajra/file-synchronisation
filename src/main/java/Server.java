@@ -65,7 +65,13 @@ public class Server implements Runnable{
         logger.info("Welcome Client"+line);
         line = receiver.nextLine();
         requestType = line;
-
+//
+//        line = receiver.nextLine();
+//        StringBuilder data = new StringBuilder();
+//        while(!line.equals("STOP")){
+//            data.append(line);
+//            line = receiver.nextLine();
+//        }
         String fileName = null;
 
         switch (requestType) {
@@ -73,54 +79,29 @@ public class Server implements Runnable{
                 // Look into client(id) buffer
                 assert sender != null;
                 sender.println(clinetBuffer.get(clientNo).checkUpdate());
-                clinetBuffer.get(clientNo).deleteDeleteFilenames();
                 break;
             case "STARTING":
                 clinetBuffer.set(clientNo, new Buffer(clientNo));
                 break;
             case "GET NEW FILE":
-                logger.info("FILE SEND NEW REQUEST FROM CLIENT" + clientNo);
+                logger.info("FILE SEND REQUEST FROM CLIENT" + clientNo);
 //                fileName = data.toString();
 //                logger.info(fileName+data);
-                FileTransferUtility transfer = new FileTransferUtility(false,0, this.receiverUdpPort, this.senderUdpPort, this.client, localDir, null, logger, 0, sender, receiver);
+                FileTransferUtility transfer = new FileTransferUtility(0, this.receiverUdpPort, this.senderUdpPort, this.client, localDir, null, logger, 0, sender, receiver);
                 fileName = transfer.receiveHandle();
                 clinetBuffer.get(this.updateBufferForOthers(clientNo)).setNewFileNames(fileName);
                 logger.info("Client Buffer for "+this.updateBufferForOthers(clientNo)+ " has been updated. " + clinetBuffer.get(this.updateBufferForOthers(clientNo)).newFileNames.get(0));
                 break;
             case "SEND NEW FILE":
-                logger.info("FILE GET NEW REQUEST FROM CLIENT" + clientNo);
+                logger.info("FILE GET REQUEST FROM CLIENT" + clientNo);
                 fileName = clinetBuffer.get(clientNo).checkUpdate().split("#")[1];
-                transfer = new FileTransferUtility(false, 0, this.receiverUdpPort, this.senderUdpPort, this.client, localDir, fileName, logger, 0, sender, receiver);
+                transfer = new FileTransferUtility(0, this.receiverUdpPort, this.senderUdpPort, this.client, localDir, fileName, logger, 0, sender, receiver);
                 transfer.sendFileServer();
                 clinetBuffer.get(clientNo).deleteNewFileNames();
                 break;
-            case "GET UPDATE FILE":
-                logger.info("FILE GET UPDATE REQUEST FROM CLIENT" + clientNo);
-                transfer = new FileTransferUtility(true,0, this.receiverUdpPort, this.senderUdpPort, this.client, localDir, null, logger, 0, sender, receiver);
-                String fileNameUpdate = transfer.receiveHandle();
-                fileName = fileNameUpdate.split("#")[0];
-                String update = fileNameUpdate.split("#")[1];
-                clinetBuffer.get(this.updateBufferForOthers(clientNo)).setUpdateFileNames(fileName,update);
-                logger.info("Client Buffer for "+this.updateBufferForOthers(clientNo)+ " has been updated. " + clinetBuffer.get(this.updateBufferForOthers(clientNo)).updateFileNames.get(0));
-                break;
-            case "SEND UPDATE FILE":
-                logger.info("FILE SEND UPDATE REQUEST FROM CLIENT" + clientNo + " It has update "+clinetBuffer.get(clientNo).checkUpdate());
-                update = clinetBuffer.get(clientNo).checkUpdate();
-                fileName = update.split("#")[1];
-                int startBlock = Integer.parseInt(update.split("#")[2]);
-                transfer = new FileTransferUtility(true, startBlock, this.receiverUdpPort, this.senderUdpPort, this.client, localDir, fileName, logger, 0, sender, receiver);
-                transfer.sendFileServer();
-                clinetBuffer.get(clientNo).deleteUpdateFileNames();
-                break;
-            case "DELETE FILE":
-                logger.info("FILE DELETE REQUEST FROM CLIENT" + clientNo);
-                fileName = receiver.nextLine();
-                Helper.DeleteSingleFile(localDir,fileName, logger);
-                clinetBuffer.get(this.updateBufferForOthers(clientNo)).setDeleteFilenames(fileName);
         }
         try {
             this.client.close();
-            receiver.close();
         } catch (IOException e) {
             logger.info("Client closing was already done!!!");
         }

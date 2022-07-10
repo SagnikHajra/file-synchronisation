@@ -1,5 +1,4 @@
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
@@ -12,14 +11,12 @@ public class FileWriter extends Thread {
 	FileChannel channel=null;
 	private String dir;
 	private String fileName;
-	private int startBlock = 0;
 
 	public FileWriter() {}
-	public FileWriter(PacketBoundedBufferMonitor bm, String dir, String fileName, int startBlock) {
+	public FileWriter(PacketBoundedBufferMonitor bm, String dir, String fileName) {
 		this.bufferMonitor=bm;
 		this.dir = dir;
 		this.fileName = fileName;
-		this.startBlock = startBlock;
 	}
 
 	public void run() {
@@ -44,21 +41,8 @@ public class FileWriter extends Thread {
 					String msg = pkt.getContentInString();
 					fileName=msg.split(":")[1]; // head packet content: "fileName: file name"
 					File file=new File(this.dir+this.fileName);
-					if(!file.exists()) {
-						file.createNewFile();
-					}
-					byte[] buff = new byte[0];
-					if(this.startBlock>0) {
-						buff = new byte[this.startBlock * Constants.blockSize];
-						FileInputStream in = new FileInputStream(file);
-						in.read(buff, 0, this.startBlock * Constants.blockSize);
-						in.close();
-					}
+					file.createNewFile();
 					channel =new FileOutputStream(file,false).getChannel();
-					
-					if(this.startBlock>0) {
-						channel.write(ByteBuffer.wrap(buff));
-					}
 					System.out.println(Constants.CRLF+">> Prepare to write the file "+fileName+Constants.CRLF);
 
 				}else {
