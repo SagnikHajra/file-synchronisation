@@ -17,11 +17,30 @@ public class Server implements Runnable{
     public static int clientNo;
     public static String localDir;
     public static String backupDir;
+    private int receiverUdpPort;
+    private int senderUdpPort;
+
 
 
 
     public Server(Socket client){
         this.client = client;
+    }
+
+    public void setClientProperties(String line){
+        clientNo = Integer.parseInt(line.trim());
+        clientPortMap.put(line.trim(), this.client.getPort());
+        if(clientNo==1) {
+            this.receiverUdpPort = Constants.CLIENT_ONE_UDP_PORT;
+            this.senderUdpPort = Constants.SERVER_UDP_PORT_CLIENT_ONE;
+        }else {
+            this.receiverUdpPort = Constants.CLIENT_TWO_UDP_PORT;
+            this.senderUdpPort = Constants.SERVER_UDP_PORT_CLIENT_TWO;
+        }
+    }
+    public int updateBufferForOthers(int clientNo){
+        if(Server.clientNo ==1)return 2;
+        return 1;
     }
 
     @Override
@@ -42,24 +61,50 @@ public class Server implements Runnable{
         }
         // First thing to do is get the client Number
         String line = receiver.nextLine();
-        clientNo = Integer.parseInt(line);
-        clientPortMap.put(line, this.client.getPort());
+        this.setClientProperties(line);
         logger.info("Welcome Client"+line);
         line = receiver.nextLine();
         requestType = line;
-        line = receiver.nextLine();
-        while(!line.equals("STOP")){
-            line = receiver.nextLine();
-        }
+//
+//        line = receiver.nextLine();
+//        StringBuilder data = new StringBuilder();
+//        while(!line.equals("STOP")){
+//            data.append(line);
+//            line = receiver.nextLine();
+//        }
+        String fileName = null;
 
-        if(requestType.equals("POLLING")){
-            // Look into client(id) buffer
-            assert sender != null;
-            sender.println(clinetBuffer.get(clientNo).checkUpdate());
-        }else if(requestType.equals("STARTING")){
-            clinetBuffer.set(clientNo, new Buffer(clientNo));
+        switch (requestType) {
+            case "POLLING":
+                // Look into client(id) buffer
+                assert sender != null;
+                sender.println(clinetBuffer.get(clientNo).checkUpdate());
+                break;
+            case "STARTING":
+                clinetBuffer.set(clientNo, new Buffer(clientNo));
+                break;
+            case "GET NEW FILE":
+                logger.info("FILE SEND REQUEST FROM CLIENT" + clientNo);
+//                fileName = data.toString();
+//                logger.info(fileName+data);
+                FileTransferUtility transfer = new FileTransferUtility(0, this.receiverUdpPort, this.senderUdpPort, this.client, localDir, null, logger, 0, sender, receiver);
+                fileName = transfer.receiveHandle();
+                clinetBuffer.get(this.updateBufferForOthers(clientNo)).setNewFileNames(fileName);
+                logger.info("Client Buffer for "+this.updateBufferForOthers(clientNo)+ " has been updated. " + clinetBuffer.get(this.updateBufferForOthers(clientNo)).newFileNames.get(0));
+                break;
+            case "SEND NEW FILE":
+                logger.info("FILE GET REQUEST FROM CLIENT" + clientNo);
+                fileName = clinetBuffer.get(clientNo).checkUpdate().split("#")[1];
+                transfer = new FileTransferUtility(0, this.receiverUdpPort, this.senderUdpPort, this.client, localDir, fileName, logger, 0, sender, receiver);
+                transfer.sendFileServer();
+                clinetBuffer.get(clientNo).deleteNewFileNames();
+                break;
         }
-
+        try {
+            this.client.close();
+        } catch (IOException e) {
+            logger.info("Client closing was already done!!!");
+        }
         logger.info("All requests from "+ this.client.getInetAddress() + "/" + this.client.getPort()+" have been completed");
     }
 

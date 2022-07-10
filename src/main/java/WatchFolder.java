@@ -89,26 +89,26 @@ public class WatchFolder {
     public void watchFolder() {
 
         try {
-                Map<Path, String> fileEvent = new HashMap<>();
-                for (WatchEvent<?> event : this.watchKey.pollEvents()) {
-                    Path fileName = (Path) event.context();
-                    // STEP6: Check type of event.
-                    WatchEvent.Kind<?> kind = event.kind();
+            Map<Path, String> fileEvent = new HashMap<>();
+            for (WatchEvent<?> event : this.watchKey.pollEvents()) {
+                Path fileName = (Path) event.context();
+                // STEP6: Check type of event.
+                WatchEvent.Kind<?> kind = event.kind();
 
-                    // STEP7: Perform necessary action with the event
-                    if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
-                        this.newFile = fileName;
-                        fileEvent.put(fileName, "CREATE");
-                    }
-                    if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
-                        this.deletedFile = fileName;
-                    }
-                    if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
-                        if (!fileEvent.containsKey(fileName) || !fileEvent.get(fileName).equals("CREATE")) {
-                            this.modifiedFile = fileName;
-                        }
+                // STEP7: Perform necessary action with the event
+                if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
+                    this.newFile = fileName;
+                    fileEvent.put(fileName, "CREATE");
+                }
+                if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
+                    this.deletedFile = fileName;
+                }
+                if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                    if (!fileEvent.containsKey(fileName) || !fileEvent.get(fileName).equals("CREATE")) {
+                        this.modifiedFile = fileName;
                     }
                 }
+            }
         } catch (Exception e) {
             logger.error("Unknown error", e);
         }
