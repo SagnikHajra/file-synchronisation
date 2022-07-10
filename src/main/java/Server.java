@@ -111,9 +111,15 @@ public class Server implements Runnable{
                 transfer.sendFileServer();
                 clinetBuffer.get(clientNo).deleteUpdateFileNames();
                 break;
+            case "DELETE FILE":
+                logger.info("FILE DELETE REQUEST FROM CLIENT" + clientNo);
+                fileName = receiver.nextLine();
+                Helper.DeleteSingleFile(localDir,fileName, logger);
+                clinetBuffer.get(this.updateBufferForOthers(clientNo)).setDeleteFilenames(fileName);
         }
         try {
             this.client.close();
+            receiver.close();
         } catch (IOException e) {
             logger.info("Client closing was already done!!!");
         }

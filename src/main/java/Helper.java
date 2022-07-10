@@ -57,17 +57,13 @@ public class Helper {
     }
 
 
-    public static void DeleteSingleFile(String localDir, String fileName)
-    {
-
-        File file
-                = new File(  localDir+fileName);
-
+    public static void DeleteSingleFile(String localDir, String fileName, Logger logger) {
+        File file = new File(  localDir+fileName);
         if (file.delete()) {
-            System.out.println("File deleted successfully");
+            logger.info("File deleted successfully");
         }
         else {
-            System.out.println("Failed to delete the file");
+            logger.info("Failed to delete the file");
         }
     }
 
