@@ -15,29 +15,26 @@ public class Buffer {
     public String checkUpdate(){
         StringBuilder out = new StringBuilder();
         if(this.newFileNames.size()>0){
-            out.append("ADD:");
-            for (String file: this.newFileNames) {
-                out.append(file).append("##");
-            }
+            out.append("ADD#");
+            out.append(this.newFileNames.get(0)).append("#");
             out.append("STOP");
+            return out.toString();
         }
         if(this.updateFileNames.size()>0){
-            out.append("UPDATE:");
-            for (int idx = 0; idx < this.updateFileNames.size(); idx++) {
-                out.append(this.updateFileNames.get(idx)).append("#").append(this.fileUpdate.get(idx)).append("##");
-            }
+            out.append("UPDATE#");
+            out.append(this.updateFileNames.get(0)).append("#").append(this.fileUpdate.get(0)).append("#");
             out.append("STOP");
+            return out.toString();
         }
         if(this.deleteFilenames.size()>0){
-            out.append("DELETE:");
-            for (String file: this.deleteFilenames) {
-                out.append(file).append("##");
-            }
+            out.append("DELETE#");
+            out.append(this.deleteFilenames.get(0)).append("#");
             out.append("STOP");
+            return out.toString();
         }
         return out.toString().equals("") ?
-                        "None":
-                        out.toString();
+                "NONE":
+                out.toString();
     }
 
     public void setNewFileNames(String newFileName) {
@@ -54,12 +51,12 @@ public class Buffer {
     }
 
     public void deleteNewFileNames(){
-        this.newFileNames.clear();
+        this.newFileNames.remove(0);
     }
 
     public void deleteUpdateFileNames(){
-        this.updateFileNames.clear();
-        this.fileUpdate.clear();
+        this.updateFileNames.remove(0);
+        this.fileUpdate.remove(0);
     }
 
     public void deleteDeleteFilenames(){

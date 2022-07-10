@@ -1,3 +1,5 @@
+import org.apache.log4j.Logger;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -6,7 +8,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 
 public class FileComparison {
-    public static int compareFileByByte(Path File_One, Path File_Two) {
+    public static int compareFileByByte(Path File_One, Path File_Two, Logger logger) {
         int idx = 0;
         try {
             long fileOne_size = Files.size(File_One);
@@ -23,8 +25,9 @@ public class FileComparison {
                 do {
                     chunk1 = first.readNBytes(Constants.blockSize);
                     chunk2 = second.readNBytes(Constants.blockSize);
-                    System.out.println(chunk1.length +" "+ chunk2.length +" "+ idx);
+                    logger.info(chunk1.length +" "+ chunk2.length +" "+ idx);
                     if(!Arrays.equals(chunk1, chunk2)){
+                        logger.info("Change detected at "+idx);
                         return idx;
                     }
                     idx++;
@@ -44,11 +47,11 @@ public class FileComparison {
 
     }
 
-    public static void main(String[] args) {
-        File File_One = new File("G:\\My Drive\\UTA\\Sem5\\ASE\\file-transfer\\clientFileHolder\\small.txt"); // Path to file one
-        File File_Two = new File("G:\\My Drive\\UTA\\Sem5\\ASE\\file-transfer\\clientFileHolder\\small_copy.txt"); // Path to file two
-
-        System.out.println(compareFileByByte(File_One.toPath(), File_Two.toPath()));
-
-    }
+//    public static void main(String[] args) {
+//        File File_One = new File("G:\\My Drive\\UTA\\Sem5\\ASE\\file-transfer\\clientFileHolder\\small.txt"); // Path to file one
+//        File File_Two = new File("G:\\My Drive\\UTA\\Sem5\\ASE\\file-transfer\\clientFileHolder\\small_copy.txt"); // Path to file two
+//
+//        System.out.println(compareFileByByte(File_One.toPath(), File_Two.toPath()));
+//
+//    }
 }
