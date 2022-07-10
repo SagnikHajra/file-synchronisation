@@ -65,13 +65,7 @@ public class Server implements Runnable{
         logger.info("Welcome Client"+line);
         line = receiver.nextLine();
         requestType = line;
-//
-//        line = receiver.nextLine();
-//        StringBuilder data = new StringBuilder();
-//        while(!line.equals("STOP")){
-//            data.append(line);
-//            line = receiver.nextLine();
-//        }
+
         String fileName = null;
 
         switch (requestType) {
@@ -101,8 +95,6 @@ public class Server implements Runnable{
                 break;
             case "GET UPDATE FILE":
                 logger.info("FILE GET UPDATE REQUEST FROM CLIENT" + clientNo);
-//                fileName = data.toString();
-//                logger.info(fileName+data);
                 transfer = new FileTransferUtility(true,0, this.receiverUdpPort, this.senderUdpPort, this.client, localDir, null, logger, 0, sender, receiver);
                 String fileNameUpdate = transfer.receiveHandle();
                 fileName = fileNameUpdate.split("#")[0];

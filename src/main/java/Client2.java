@@ -104,7 +104,7 @@ public class Client2 implements Runnable{
                     // Send the update over UDP
                     Path origin = Paths.get(localDir, String.valueOf(watcher.modifiedFile));
                     Path backup = Paths.get(backupDir, String.valueOf(watcher.modifiedFile));
-
+                    Thread.sleep(50);
                     startBlock = FileComparison.compareFileByByte(origin, backup, logger);
                     logger.info("Change detected at Block no "+startBlock);
                     if(startBlock>-1) {

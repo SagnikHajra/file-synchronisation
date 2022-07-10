@@ -46,12 +46,4 @@ public class FileComparison {
         }
 
     }
-
-//    public static void main(String[] args) {
-//        File File_One = new File("G:\\My Drive\\UTA\\Sem5\\ASE\\file-transfer\\clientFileHolder\\small.txt"); // Path to file one
-//        File File_Two = new File("G:\\My Drive\\UTA\\Sem5\\ASE\\file-transfer\\clientFileHolder\\small_copy.txt"); // Path to file two
-//
-//        System.out.println(compareFileByByte(File_One.toPath(), File_Two.toPath()));
-//
-//    }
 }

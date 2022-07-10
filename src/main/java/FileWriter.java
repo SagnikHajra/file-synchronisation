@@ -47,11 +47,16 @@ public class FileWriter extends Thread {
 					if(!file.exists()) {
 						file.createNewFile();
 					}
+					byte[] buff = new byte[0];
+					if(this.startBlock>0) {
+						buff = new byte[this.startBlock * Constants.blockSize];
+						FileInputStream in = new FileInputStream(file);
+						in.read(buff, 0, this.startBlock * Constants.blockSize);
+						in.close();
+					}
 					channel =new FileOutputStream(file,false).getChannel();
-					if(this.startBlock>0){
-						byte[] buff = new byte[this.startBlock*Constants.blockSize];
-						FileInputStream in = new FileInputStream(this.fileName);
-						in.read(buff,0, this.startBlock*Constants.blockSize);
+					
+					if(this.startBlock>0) {
 						channel.write(ByteBuffer.wrap(buff));
 					}
 					System.out.println(Constants.CRLF+">> Prepare to write the file "+fileName+Constants.CRLF);
