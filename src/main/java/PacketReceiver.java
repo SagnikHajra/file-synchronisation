@@ -42,7 +42,7 @@ public class PacketReceiver extends Thread {
 				udpReceiverSocket.receive(udpReceiverPacket);
 								
 				Packet pkt=new Packet(udpReceiverPacket.getData(),udpReceiverPacket.getLength());													
-				System.out.println(">> Receive the packet with index "+pkt.getIndex());
+//				System.out.println(">> Receive the packet with index "+pkt.getIndex());
 				
 				// send an ACK packet in case that the packet has already received.
 				currentPacketIndex=pkt.getIndex();
@@ -62,7 +62,7 @@ public class PacketReceiver extends Thread {
 				// send an ACK with the packet index received
 				udpReceiverPacket.setData(Helper.intToByteArray(currentPacketIndex),0,4);				
 				udpReceiverSocket.send(udpReceiverPacket);
-				System.out.println("   Send an ACK packet for packet "+currentPacketIndex+Constants.CRLF);
+//				System.out.println("   Send an ACK packet for packet "+currentPacketIndex+Constants.CRLF);
 							         
 				//deposit
 				this.bufferMonitor.deposit(pkt);
