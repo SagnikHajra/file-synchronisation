@@ -57,13 +57,13 @@ public class PacketSender extends Thread {
 						udpSenderSocket.receive(udpSenderPacket);
 					}catch(SocketTimeoutException e) {
 						// resend the packet if the corresponding ACK packet is not received
-						System.out.println(">> Resend the packet with index "+pktS.getIndex()+Constants.CRLF);
+//						System.out.println(">> Resend the packet with index "+pktS.getIndex()+Constants.CRLF);
 						udpSenderPacket.setData(buf,0,pktS.getContentSize()+4);
 						udpSenderSocket.send(udpSenderPacket);
 					}
 					int index=Helper.byteArrayToInt(Helper.get4Bytes(udpSenderPacket.getData()));
 					if (index==pktS.getIndex()) {
-						System.out.println("ACK for the packet with index "+index+Constants.CRLF);			
+//						System.out.println("ACK for the packet with index "+index+Constants.CRLF);
 						break;
 					}								
 				}

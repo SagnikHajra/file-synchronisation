@@ -73,6 +73,7 @@ public class Server implements Runnable{
                 // Look into client(id) buffer
                 assert sender != null;
                 sender.println(clinetBuffer.get(clientNo).checkUpdate());
+                clinetBuffer.get(clientNo).deleteDeleteFilenames();
                 break;
             case "STARTING":
                 clinetBuffer.set(clientNo, new Buffer(clientNo));
