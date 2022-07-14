@@ -21,7 +21,6 @@ public class FileTransferUtility {
     public static InetAddress serverIp = null;
     public static Logger logger;
     public static int clientNum;
-    private boolean isUpdate=false;
 
 
     static {
@@ -32,9 +31,8 @@ public class FileTransferUtility {
         }
     }
 
-    public FileTransferUtility(boolean isUpdate,int startBlock, int sourceUDPPOrt, int destinationPort, Socket tcpSocket, String dir, String fileName,
+    public FileTransferUtility(int startBlock, int sourceUDPPOrt, int destinationPort, Socket tcpSocket, String dir, String fileName,
                                Logger logger, int clientNum, PrintWriter sender, Scanner receiver) {
-        this.isUpdate = isUpdate;
         this.startBlock = startBlock;
         this.sourceUDPPOrt = sourceUDPPOrt;
         this.receiverUdpPort = destinationPort;
@@ -89,15 +87,8 @@ public class FileTransferUtility {
 
 
     public void sendfile() {
-        logger.info("from sendFile");
         try {
-            StringBuilder msg = new StringBuilder(this.fileName);
-            if(this.isUpdate){
-                msg.append("#");
-                msg.append(this.startBlock);
-            }
-            logger.info(msg);
-            this.sender.println(msg);
+            this.sender.println(this.fileName);
 
             PacketBoundedBufferMonitor bufferMonitor=new PacketBoundedBufferMonitor(Constants.MONITOR_BUFFER_SIZE);
             InetAddress senderIp=InetAddress.getByName("localhost");
@@ -120,24 +111,14 @@ public class FileTransferUtility {
 
 
     public String  receiveHandle() {
-        logger.info("from receiveHandle");
-        String line = this.receiver.nextLine();
-        String returnVar = line;
-        logger.info(line);
-        if(this.isUpdate){
-            this.fileName = line.split("#")[0];
-            this.startBlock = Integer.parseInt(line.split("#")[1]);
-        }else{
-            this.fileName = line;
-        }
-
+        this.fileName = this.receiver.nextLine();
         try {
             PacketBoundedBufferMonitor bm=new PacketBoundedBufferMonitor(Constants.MONITOR_BUFFER_SIZE);
 
             this.receiveFile(bm);// receive the file
 
         }catch(Exception e) {e.printStackTrace();}
-        return returnVar;
+        return this.fileName;
     }
 
     public void receiveFile(PacketBoundedBufferMonitor bm) {
@@ -145,7 +126,7 @@ public class FileTransferUtility {
         PacketReceiver packetReceiver=new PacketReceiver(bm, serverIp,this.receiverUdpPort, serverIp,this.sourceUDPPOrt);
         packetReceiver.start();
 
-        FileWriter fileWriter=new FileWriter(bm, this.dir, this.fileName, this.startBlock);
+        FileWriter fileWriter=new FileWriter(bm, this.dir, this.fileName);
         fileWriter.start();
         try {
             packetReceiver.join();

@@ -15,8 +15,8 @@ public class Constants {
             },
             { // backup dirs. Needed to compare files with user facing dirs for changes
                     "C:\\Users\\Sagnik Hajra\\Desktop\\file-sync-testing\\backup\\server\\",
-                    "C:\\Users\\Sagnik Hajra\\Desktop\\file-sync-testing\\backup\\client_one\\",
-                    "C:\\Users\\Sagnik Hajra\\Desktop\\file-sync-testing\\backup\\client_two\\"
+                    "C:\\Users\\Sagnik Hajra\\Desktop\\file-sync-testing\\client_one\\",
+                    "C:\\Users\\Sagnik Hajra\\Desktop\\file-sync-testing\\client_two\\"
             }
     };
 

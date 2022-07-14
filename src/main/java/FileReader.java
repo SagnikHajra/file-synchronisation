@@ -36,9 +36,9 @@ public class FileReader extends Thread {
                 }
                 fileFound=true;
             }
-            if (this.startBlock>0){
-                long skipped = in.skip(startBlock* Constants.blockSize);
-                System.out.println(">> skipped first "+ skipped +"bytes");
+            while (startBlock>0){
+                in.read(new byte[Constants.blockSize],0, Constants.blockSize);
+                startBlock--;
             }
             boolean flagFileHead=true;
             int packetIndex=0;
