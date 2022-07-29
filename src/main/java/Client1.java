@@ -183,7 +183,6 @@ public class Client1 implements Runnable{
                     Helper.DeleteSingleFile(localDir, line.split("#")[1], logger);
                     Helper.DeleteSingleFile(backupDir, line.split("#")[1], logger);
                 }
-
                 this.getNewWatcher();
                 writer = false;
             }else {

@@ -174,14 +174,15 @@ public class Client2 implements Runnable{
                 if (line.startsWith("ADD")) {
                     String command = clientNum+Constants.CRLF+"SEND NEW FILE";
                     this.getFile(command, line.split("#")[1], "0");
+                    Helper.moveToBackupFolder(localDir,backupDir,line.split("#")[1], logger);
                 }else if (line.startsWith("UPDATE")) {
                     String command = clientNum+Constants.CRLF+"SEND UPDATE FILE";
                     this.getFile(command, line.split("#")[1], line.split("#")[2]);
+                    Helper.moveToBackupFolder(localDir,backupDir,line.split("#")[1], logger);
                 }else if (line.startsWith("DELETE")) {
                     Helper.DeleteSingleFile(localDir, line.split("#")[1], logger);
                     Helper.DeleteSingleFile(backupDir, line.split("#")[1], logger);
                 }
-                Helper.moveToBackupFolder(localDir,backupDir,line.split("#")[1], logger);
                 this.getNewWatcher();
                 writer = false;
             }else {
