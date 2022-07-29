@@ -60,17 +60,12 @@
 //
 //}
 
-import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Path;
-import java.nio.file.StandardWatchEventKinds;
-import java.nio.file.WatchEvent;
-import java.nio.file.WatchKey;
-import java.nio.file.WatchService;
-import java.util.concurrent.TimeUnit;
-
 import org.apache.log4j.Logger;
-import utilities.Log;
+
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.HashMap;
+import java.util.Map;
 
 public class WatchFolder {
     public Path newFile=null;
@@ -79,10 +74,10 @@ public class WatchFolder {
     public final WatchKey watchKey;
     public final WatchService watchService;
     public final Path directory;
-    private static final Logger logger = Log.getLogger("Client");
+    private static Logger logger;
 
-
-    public WatchFolder(String dir) throws IOException {
+    public WatchFolder(String dir, Logger logger) throws IOException {
+        WatchFolder.logger = logger;
         // STEP1: Get the path of the directory which you want to monitor.
         this.directory = Path.of(dir);
         // STEP2: Create a watch service
@@ -94,47 +89,29 @@ public class WatchFolder {
     public void watchFolder() {
 
         try {
-//            while (true) {fileName
-                for (WatchEvent<?> event : this.watchKey.pollEvents()) {
-                    // STEP5: Get file name from even context
-                    WatchEvent<Path> pathEvent = (WatchEvent<Path>) event;
+            Map<Path, String> fileEvent = new HashMap<>();
+            for (WatchEvent<?> event : this.watchKey.pollEvents()) {
+                Path fileName = (Path) event.context();
+                // STEP6: Check type of event.
+                WatchEvent.Kind<?> kind = event.kind();
 
-                    Path fileName = pathEvent.context();
-
-                    // STEP6: Check type of event.
-                    WatchEvent.Kind<?> kind = event.kind();
-
-                    // STEP7: Perform necessary action with the event
-                    if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
-                        this.newFile = fileName;
-                    }
-
-                    if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
-                        this.deletedFile = fileName;
-                    }
-                    if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                // STEP7: Perform necessary action with the event
+                if (kind == StandardWatchEventKinds.ENTRY_CREATE) {
+                    this.newFile = fileName;
+                    fileEvent.put(fileName, "CREATE");
+                }
+                if (kind == StandardWatchEventKinds.ENTRY_DELETE) {
+                    this.deletedFile = fileName;
+                }
+                if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                    if (!fileEvent.containsKey(fileName) || !fileEvent.get(fileName).equals("CREATE")) {
                         this.modifiedFile = fileName;
                     }
-                    TimeUnit.MILLISECONDS.sleep(5000);
                 }
-//                TimeUnit.MILLISECONDS.sleep(50);
-
-                // STEP8: Reset the watch key everytime for continuing to use it for further event polling
-//                boolean valid = watchKey.reset();
-//                if (!valid) {
-//                    break;
-//                }
-
-//            }
-
+            }
         } catch (Exception e) {
             logger.error("Unknown error", e);
         }
 
     }
-//    public static void main(String[] args){
-//        WatchFolder obj = new WatchFolder("C:\\Users\\Sagnik Hajra\\Desktop\\PPT\\New folder");
-//        obj.watchFolder();
-//    }
-
 }

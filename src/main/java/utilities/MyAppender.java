@@ -5,6 +5,9 @@ import org.apache.log4j.spi.ErrorHandler;
 import org.apache.log4j.spi.Filter;
 import org.apache.log4j.spi.LoggingEvent;
 
+import java.text.SimpleDateFormat;
+import java.util.Locale;
+
 public class MyAppender implements Appender {
 
     public void addFilter(Filter newFilter) {
@@ -24,7 +27,7 @@ public class MyAppender implements Appender {
     }
 
     public void doAppend(LoggingEvent event) {
-        System.out.println("MyAppender: " + event.getMessage());
+        System.out.println(">> " + new SimpleDateFormat("hh:mm:ss", Locale.ENGLISH).format(event.timeStamp) +": "+  event.getMessage());
     }
 
     public String getName() {
